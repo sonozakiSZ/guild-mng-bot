@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, DiscordAPIError, Events, Message, RESTJSONErrorCodes } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, DiscordAPIError, Events, GuildTextBasedChannel, Message, RESTJSONErrorCodes } from "discord.js";
 import { debounce } from "lodash";
 import { BotEvent, ReplyEmbedType, getReplyEmbed } from "../services/discord";
 import { discordBotKeyvs } from "../services/discordBotKeyvs";
@@ -145,10 +145,13 @@ const executeStickMessage = async (message: Message) => {
     stickMessagePairs.delete(message.channel.id);
     const content = stickMessage.content;
     const embeds = stickMessage.embeds;
-    const newStickMessage = await message.channel.send({ content, embeds });
-    stickMessagePairs.set(message.channel.id, newStickMessage.id);
-    await discordBotKeyvs.setStickMessageChannelIdMessageIdPairs(message.guildId!, stickMessagePairs);
-    logger.info(__t("log/bot/stickMessage/execute", { guild: message.guildId!, channel: message.channel.id }));
+    const channel = message.channel as GuildTextBasedChannel | null;
+    if(channel){
+        const newStickMessage = await channel.send({ content, embeds });
+        stickMessagePairs.set(message.channel.id, newStickMessage.id);
+        await discordBotKeyvs.setStickMessageChannelIdMessageIdPairs(message.guildId!, stickMessagePairs);
+        logger.info(__t("log/bot/stickMessage/execute", { guild: message.guildId!, channel: message.channel.id }));
+    }
 };
 
 const debouncedExecuteStickMessage = debounce(executeStickMessage, 3_000);
